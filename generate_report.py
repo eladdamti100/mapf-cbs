@@ -49,7 +49,7 @@ def S():
     s['body']  = ParagraphStyle('body',  fontName='Times-Roman',  fontSize=12, leading=15, spaceAfter=4, alignment=TA_JUSTIFY)
     s['bul']   = ParagraphStyle('bul',   fontName='Times-Roman',  fontSize=12, leading=15, spaceAfter=2, alignment=TA_JUSTIFY, leftIndent=14, firstLineIndent=-10)
     s['cap']   = ParagraphStyle('cap',   fontName='Times-Italic', fontSize=9,  leading=12, alignment=TA_CENTER, spaceAfter=3, spaceBefore=2)
-    s['code']  = ParagraphStyle('code',  fontName='Courier',      fontSize=8,  leading=11, leftIndent=12, spaceAfter=2)
+    s['code']  = ParagraphStyle('code',  fontName='Courier',      fontSize=8,  leading=12, leftIndent=12, spaceAfter=3, wordWrap='LTR')
     s['abl']   = ParagraphStyle('abl',   fontName='Times-Bold',   fontSize=12, leading=15, alignment=TA_CENTER, spaceAfter=3)
     s['ref']   = ParagraphStyle('ref',   fontName='Times-Roman',  fontSize=12, leading=16, spaceAfter=6, alignment=TA_JUSTIFY, leftIndent=18, firstLineIndent=-18)
     return s
@@ -305,7 +305,7 @@ def build():
 
     if os.path.exists(fig1) and os.path.exists(fig2):
         story.append(KeepTogether([
-            side_by_side(fig1, fig2, w_frac=0.49, h_frac=0.60),
+            side_by_side(fig1, fig2, w_frac=0.49, h_frac=0.72),
             p('Figure 1 (left): CBS vs. Joint A* success rate vs. number of agents. '
               'Figure 2 (right): Mean CBS runtime on successfully solved instances.', 'cap'),
         ]))
@@ -434,12 +434,15 @@ def build():
           'results/extension_warehouse.csv; results/fig1_success_rate.png, '
           'results/fig2_runtime.png, results/fig3_ct_nodes.png, '
           'results/fig4_topology_success.png.'),
-        p('<b>How to run:</b>'),
+        p('<b>How to run (commands must be typed on one line each):</b>'),
+        p('Step 1 - Install dependency:', 'body'),
         p('pip install matplotlib', 'code'),
-        p('python main.py --mode reproduce --n-instances 25 --time-limit 30 '
-          '--agent-counts 4 6 8 10 12 15 18 20', 'code'),
-        p('python main.py --mode extension --n-instances 25 --time-limit 15 '
-          '--agent-counts 4 6 8 10 12 15 18 20', 'code'),
+        p('Step 2 - Run reproduction experiment (CBS vs. Joint A* on open grid):', 'body'),
+        p('python main.py --mode reproduce --n-instances 25 --time-limit 30', 'code'),
+        p('         --agent-counts 4 6 8 10 12 15 18 20', 'code'),
+        p('Step 3 - Run extension experiment (open grid vs. warehouse grid):', 'body'),
+        p('python main.py --mode extension --n-instances 25 --time-limit 15', 'code'),
+        p('         --agent-counts 4 6 8 10 12 15 18 20', 'code'),
         sp(3),
     ]
 
