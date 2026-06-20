@@ -15,7 +15,9 @@ import json
 import time
 
 from graph import Grid
-from cbs import cbs, independent_astar
+from cbs import cbs
+from joint_astar import run_joint_astar
+from tsa_star import tsa_star
 
 
 # ---------------------------------------------------------------------------
@@ -30,15 +32,10 @@ def make_open_grid(width=20, height=20, obstacle_pct=0.1, seed=None):
     obstacles = set(rng.sample(all_cells, n_obs))
     return Grid(width, height, obstacles)
 
-
 def make_warehouse_grid(width=20, height=20, corridor_width=1, seed=None):
     """
     Warehouse-style grid: horizontal shelves (rows of obstacles) with
     narrow vertical corridors every few columns.
-
-    Layout:
-      - Shelves occupy alternating rows (rows 2,3, 6,7, 10,11, ...)
-      - Corridors: every (corridor_width + shelf_width) columns, one column is free
     """
     obstacles = set()
     shelf_rows = []
@@ -55,7 +52,6 @@ def make_warehouse_grid(width=20, height=20, corridor_width=1, seed=None):
                 obstacles.add((x, y))
 
     return Grid(width, height, obstacles)
-
 
 def save_map(grid, path):
     """Save a grid to a simple text file."""
@@ -75,24 +71,45 @@ def save_map(grid, path):
 # ---------------------------------------------------------------------------
 # Instance generator
 # ---------------------------------------------------------------------------
+#IMPORTANT: DONT KNOW IF IT REALLY NEED IT!
+def is_instance_solvable(grid, starts, goals):
+    """
+    Sanity check: Ensures that every individual agent has at least one valid 
+    physical path to its goal (ignoring other agents).
+    Prevents "0.0s fails" due to agents spawning inside obstacle cages.
+    """
+    for s, g in zip(starts, goals):
+        path = tsa_star(grid, s, g, set(), max_t=200)
+        if path is None:
+            return False  # Agent is trapped, instance is fundamentally unsolvable
+    return True
 
-def generate_instance(grid, n_agents, seed=None):
+def generate_instance(grid, n_agents, seed_base=42):
     """
     Generate random start/goal pairs for n_agents on the given grid.
-    Starts and goals are all distinct vertices.
-    Returns (starts, goals) or raises ValueError if not enough free cells.
+    Will keep trying different random seeds until a physically solvable 
+    instance (no trapped agents) is found.
     """
-    rng = random.Random(seed)
-    free = grid.vertices()
-    if len(free) < 2 * n_agents:
-        raise ValueError(
-            f"Not enough free cells ({len(free)}) for {n_agents} agents "
-            f"(need {2 * n_agents})"
-        )
-    chosen = rng.sample(free, 2 * n_agents)
-    starts = chosen[:n_agents]
-    goals = chosen[n_agents:]
-    return starts, goals
+    attempts = 0
+    while attempts < 1000:
+        current_seed = seed_base + attempts
+        rng = random.Random(current_seed)
+        free = grid.vertices()
+        
+        if len(free) < 2 * n_agents:
+            raise ValueError("Not enough free cells for agents.")
+            
+        chosen = rng.sample(free, 2 * n_agents)
+        starts = chosen[:n_agents]
+        goals = chosen[n_agents:]
+        
+        # Check if this draw is actually solvable
+        if is_instance_solvable(grid, starts, goals):
+            return {'starts': starts, 'goals': goals, 'id': current_seed}
+            
+        attempts += 1
+        
+    raise RuntimeError("Could not find a solvable instance after 1000 attempts. Map might be too cluttered.")
 
 
 def save_instance(starts, goals, path):
@@ -113,84 +130,105 @@ def load_instance(path):
 # Experiment runner
 # ---------------------------------------------------------------------------
 
-def run_experiment(
-    grid,
-    agent_counts,
-    n_instances=25,
-    time_limit=60.0,
-    seed_base=42,
-    run_baseline=True,
-    verbose=True,
-):
+def run_experiment(graph, instances, time_limit=60.0, run_baseline=True):
     """
-    For each agent count in agent_counts, generate n_instances random instances
-    and run CBS (and optionally the independent A* baseline).
-
-    Returns a list of result dicts, one per (agent_count, instance_index).
+    Runs experiments for both CBS and Joint A* and prints status to console.
     """
     results = []
+    n_instances = len(instances)
+    
+    cbs_successes = 0
+    cbs_total_time = 0.0
+    cbs_total_nodes = 0
+    
+    ja_successes = 0
+    ja_total_time = 0.0
+    
+    for idx, instance in enumerate(instances):
+        n_agents = len(instance['starts'])
+        
+        print(f"  [Instance {idx+1:02d}/{n_instances}] Agents: {n_agents:2d} | CBS: ", end="", flush=True)
+        
+        # --- Run CBS ---
+        cbs_start = time.time()
+        cbs_result = cbs(graph=graph, starts=instance['starts'], goals=instance['goals'], time_limit=time_limit)
+        cbs_time = time.time() - cbs_start
+        cbs_success = cbs_result is not None and cbs_result.get('paths') is not None
+        
+        cbs_total_time += cbs_time
+        if cbs_success:
+            cbs_successes += 1
+            nodes = cbs_result.get('ct_nodes', 0)
+            cbs_total_nodes += nodes
+            cbs_status = f"{cbs_successes}/{idx+1}"
+        else:
+            nodes = cbs_result.get('ct_nodes', 0) if cbs_result else 0
+            cbs_status = "FAIL"
 
-    for n_agents in agent_counts:
-        cbs_successes = 0
-        baseline_successes = 0
+        print(f"{cbs_status} ({cbs_time:5.2f}s, {nodes:4d} nodes)", end="", flush=True)
+            
+        # --- Run Joint A* ---
+        ja_success = False
+        ja_time = 0.0
+        bl_result = None
+        
+        if run_baseline:
+            print(f" | Joint A*: ", end="", flush=True)
+            ja_start = time.time()
+            bl_result = run_joint_astar(graph, instance['starts'], instance['goals'], time_limit=time_limit)
+            ja_time = time.time() - ja_start
+            ja_success = bl_result is not None and bl_result.get('success', False)
+            
+            ja_total_time += ja_time
+            if ja_success:
+                ja_successes += 1
+                ja_status = f"{ja_successes}/{idx+1}"
+            else:
+                ja_status = "FAIL"
+            
+            print(f"{ja_status} ({ja_time:5.2f}s)", end="", flush=True)
+        
+        print() # Newline at the end of the instance
 
-        for inst_idx in range(n_instances):
-            seed = seed_base + n_agents * 1000 + inst_idx
-            try:
-                starts, goals = generate_instance(grid, n_agents, seed=seed)
-            except ValueError as e:
-                if verbose:
-                    print(f"  [skip] n={n_agents} inst={inst_idx}: {e}")
-                continue
+        # Store result row
+        row = {
+            'n_agents': n_agents,
+            'instance': idx,
+            'cbs_success': cbs_success,
+            'cbs_time': cbs_time,
+            'cbs_cost': cbs_result['cost'] if cbs_success else None,
+            'cbs_ct_nodes': cbs_result.get('ct_nodes') if cbs_success else None,
+            'cbs_ll_calls': cbs_result.get('low_level_calls') if cbs_success else None,
+            'baseline_success': ja_success,
+            'baseline_time': ja_time,
+            'baseline_cost': bl_result['cost'] if run_baseline and ja_success else None,
+            'baseline_conflicts': 0 if run_baseline and ja_success else None,
+        }
+        results.append(row)
 
-            # Run CBS
-            cbs_result = cbs(graph=grid, starts=starts, goals=goals, time_limit=time_limit)
-            if cbs_result['success']:
-                cbs_successes += 1
-
-            row = {
-                'n_agents': n_agents,
-                'instance': inst_idx,
-                'cbs_success': cbs_result['success'],
-                'cbs_time': cbs_result['time'],
-                'cbs_cost': cbs_result['cost'],
-                'cbs_ct_nodes': cbs_result['ct_nodes'],
-                'cbs_ll_calls': cbs_result['low_level_calls'],
-            }
-
-            # Run baseline
-            if run_baseline:
-                bl_result = independent_astar(
-                    graph=grid, starts=starts, goals=goals, time_limit=time_limit
-                )
-                if bl_result['success']:
-                    baseline_successes += 1
-                row.update({
-                    'baseline_success': bl_result['success'],
-                    'baseline_time': bl_result['time'],
-                    'baseline_cost': bl_result['cost'],
-                    'baseline_conflicts': bl_result['num_conflicts'],
-                })
-
-            results.append(row)
-
-        if verbose:
-            pct = 100 * cbs_successes / n_instances
-            print(f"  n_agents={n_agents:3d} | CBS success: {cbs_successes}/{n_instances} ({pct:.0f}%)")
+    # --- Summary Line ---
+    if instances:
+        n_agents = len(instances[0]['starts'])
+        cbs_pct = (cbs_successes / n_instances) * 100
+        
+        print(f"  => n_agents= {n_agents:2d} | CBS success: {cbs_successes}/{n_instances} ({cbs_pct:.0f}%), Total Time: {cbs_total_time:.2f}s, Total Nodes: {cbs_total_nodes}")
+        
+        if run_baseline:
+            ja_pct = (ja_successes / n_instances) * 100
+            print(f"  => n_agents= {n_agents:2d} | Joint A* success: {ja_successes}/{n_instances} ({ja_pct:.0f}%), Total Time: {ja_total_time:.2f}s")
+            
+        print() 
 
     return results
-
 
 def save_results(results, path):
     if not results:
         return
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, 'w', newline='') as f:
+    with open(path, 'w', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=results[0].keys())
         writer.writeheader()
         writer.writerows(results)
-    print(f"Results saved to {path}")
-
 
 def load_results(path):
     with open(path, 'r') as f:

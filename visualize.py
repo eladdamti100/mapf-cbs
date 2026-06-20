@@ -56,7 +56,7 @@ def plot_success_rate(results, title='Success Rate', out_path=None):
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.plot(cbs_counts, cbs_sr, 'b-o', label='CBS', linewidth=2, markersize=6)
     if has_baseline:
-        ax.plot(bl_counts, bl_sr, 'r--s', label='Independent A* (baseline)', linewidth=2, markersize=6)
+        ax.plot(bl_counts, bl_sr, 'r--s', label='Joint-State A*', linewidth=2, markersize=6)
 
     ax.set_xlabel('Number of Agents', fontsize=12)
     ax.set_ylabel('Success Rate (%)', fontsize=12)
@@ -87,11 +87,12 @@ def plot_runtime(results, title='Runtime Comparison', out_path=None):
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.plot(cbs_counts, cbs_rt, 'b-o', label='CBS', linewidth=2, markersize=6)
     if has_baseline:
-        ax.plot(bl_counts, bl_rt, 'r--s', label='Independent A* (baseline)', linewidth=2, markersize=6)
+        ax.plot(bl_counts, bl_rt, 'r--s', label='Joint-State A*', linewidth=2, markersize=6)
 
     ax.set_xlabel('Number of Agents', fontsize=12)
     ax.set_ylabel('Mean Runtime (s) on Solved Instances', fontsize=12)
     ax.set_title(title, fontsize=13)
+    # ax.set_yscale('log')
     ax.legend(fontsize=11)
     ax.grid(True, alpha=0.3)
     plt.tight_layout()
@@ -115,6 +116,7 @@ def plot_ct_nodes(results, title='CT Nodes Expanded', out_path=None):
     ax.set_xlabel('Number of Agents', fontsize=12)
     ax.set_ylabel('Mean CT Nodes Expanded', fontsize=12)
     ax.set_title(title, fontsize=13)
+    # ax.set_yscale('log')
     ax.legend(fontsize=11)
     ax.grid(True, alpha=0.3)
     plt.tight_layout()
@@ -152,6 +154,7 @@ def plot_topology_comparison(results_open, results_ware, out_path=None):
     axes[1].set_xlabel('Number of Agents', fontsize=12)
     axes[1].set_ylabel('Mean CT Nodes Expanded', fontsize=12)
     axes[1].set_title('CT Nodes Expanded: Open vs Warehouse', fontsize=13)
+    # axes[1].set_yscale('log')
     axes[1].legend(fontsize=11)
     axes[1].grid(True, alpha=0.3)
 

@@ -28,7 +28,7 @@ MAPS_DIR = os.path.join(BASE_DIR, 'maps')
 INSTANCES_DIR = os.path.join(BASE_DIR, 'instances')
 
 from graph import Grid
-from cbs import cbs, independent_astar
+from cbs import cbs
 from benchmark import (
     make_open_grid, make_warehouse_grid,
     generate_instance, run_experiment, save_results, save_map,
@@ -53,7 +53,7 @@ def mode_demo(args):
 
     result = cbs(grid, starts, goals, time_limit=30.0)
 
-    if result['success']:
+    if result['paths']:
         print(f"Solution found!")
         print(f"  Cost (SOC):        {result['cost']}")
         print(f"  CT nodes expanded: {result['ct_nodes']}")
@@ -67,7 +67,7 @@ def mode_demo(args):
 
     # Animate if matplotlib available
     try:
-        if result['success']:
+        if result['paths']:
             animate_solution(grid, result['paths'], starts, goals,
                              title="CBS Demo — 3 agents")
     except Exception as e:
@@ -78,24 +78,27 @@ def mode_solve(args):
     """Solve a single random instance and print result."""
     import random
     grid = make_open_grid(args.width, args.height, obstacle_pct=0.1, seed=args.seed)
-    starts, goals = generate_instance(grid, args.agents, seed=args.seed)
+    
+    # generate_instance returns a dict now, we extract starts and goals
+    inst = generate_instance(grid, args.agents, seed_base=args.seed)
+    starts, goals = inst['starts'], inst['goals']
 
     print(f"Solving: {args.agents} agents on {args.width}x{args.height} open grid")
     result = cbs(grid, starts, goals, time_limit=args.time_limit)
 
-    if result['success']:
+    if result['paths']:
         print(f"SUCCESS | cost={result['cost']} | CT_nodes={result['ct_nodes']} "
               f"| time={result['time']:.3f}s")
         for i, p in enumerate(result['paths']):
             print(f"  Agent {i}: {p}")
     else:
-        print(f"TIMEOUT/FAIL after {result['time']:.1f}s | CT_nodes={result['ct_nodes']}")
+        print(f"TIMEOUT/FAIL after {result['time']:.1f}s | CT_nodes={result.get('ct_nodes', 0)}")
 
 
 def mode_reproduce(args):
     """
     Reproduce the two central results from Sharon et al. 2015:
-      1. Success rate vs number of agents (CBS vs independent A* baseline)
+      1. Success rate vs number of agents (CBS vs joint A* baseline)
       2. Runtime comparison on solved instances
     """
     print("=== Reproducing Sharon et al. 2015 Results ===")
@@ -108,15 +111,16 @@ def mode_reproduce(args):
     grid = make_open_grid(args.width, args.height, obstacle_pct=args.obstacle_pct, seed=1)
     save_map(grid, os.path.join(MAPS_DIR, 'open_grid.map'))
 
-    results = run_experiment(
-        grid=grid,
-        agent_counts=args.agent_counts,
-        n_instances=args.n_instances,
-        time_limit=args.time_limit,
-        seed_base=42,
-        run_baseline=True,
-        verbose=True,
-    )
+    results = []
+    for n_agents in args.agent_counts:
+        instances = []
+        for i in range(args.n_instances):
+            inst = generate_instance(grid, n_agents, seed_base=args.seed + n_agents * 100 + i)
+            inst['id'] = i
+            instances.append(inst)
+            
+        res = run_experiment(grid, instances, time_limit=args.time_limit, run_baseline=True)
+        results.extend(res)
 
     out_path = os.path.join(RESULTS_DIR, 'reproduce_open.csv')
     save_results(results, out_path)
@@ -162,27 +166,29 @@ def mode_extension(args):
     save_map(ware_grid, os.path.join(MAPS_DIR, 'warehouse_grid.map'))
 
     print("Running on OPEN GRID...")
-    results_open = run_experiment(
-        grid=open_grid,
-        agent_counts=args.agent_counts,
-        n_instances=args.n_instances,
-        time_limit=args.time_limit,
-        seed_base=42,
-        run_baseline=False,
-        verbose=True,
-    )
+    results_open = []
+    for n_agents in args.agent_counts:
+        instances = []
+        for i in range(args.n_instances):
+            inst = generate_instance(open_grid, n_agents, seed_base=args.seed + n_agents * 100 + i)
+            inst['id'] = i
+            instances.append(inst)
+        res = run_experiment(open_grid, instances, time_limit=args.time_limit, run_baseline=False)
+        results_open.extend(res)
+    
     save_results(results_open, os.path.join(RESULTS_DIR, 'extension_open.csv'))
 
     print("\nRunning on WAREHOUSE GRID...")
-    results_ware = run_experiment(
-        grid=ware_grid,
-        agent_counts=args.agent_counts,
-        n_instances=args.n_instances,
-        time_limit=args.time_limit,
-        seed_base=42,
-        run_baseline=False,
-        verbose=True,
-    )
+    results_ware = []
+    for n_agents in args.agent_counts:
+        instances = []
+        for i in range(args.n_instances):
+            inst = generate_instance(ware_grid, n_agents, seed_base=args.seed + n_agents * 100 + i)
+            inst['id'] = i
+            instances.append(inst)
+        res = run_experiment(ware_grid, instances, time_limit=args.time_limit, run_baseline=False)
+        results_ware.extend(res)
+        
     save_results(results_ware, os.path.join(RESULTS_DIR, 'extension_warehouse.csv'))
 
     try:

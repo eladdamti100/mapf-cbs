@@ -9,7 +9,6 @@ Paths are lists of vertices, indexed by timestep.
 The path is padded implicitly: if t >= len(path), the agent stays at path[-1] (goal).
 """
 
-
 def get_pos(path, t):
     """Return the vertex an agent occupies at timestep t (stays at goal after path ends)."""
     if t < len(path):
@@ -41,7 +40,7 @@ def find_first_conflict(paths):
                 if vi == vj:
                     return ('vertex', i, j, vi, t)
 
-                # Edge conflict (swap): agent i: vi->vi_next, agent j: vj->vj_next
+                # Edge conflict
                 if t + 1 < max_t:
                     vi_next = get_pos(paths[i], t + 1)
                     vj_next = get_pos(paths[j], t + 1)
@@ -50,14 +49,13 @@ def find_first_conflict(paths):
 
     return None
 
-
 def find_all_conflicts(paths):
-    """Return a list of all conflicts (used for analysis/reporting)."""
-    conflicts = []
+    """Return a list of all conflicts. Used for statistics."""
     n = len(paths)
     if n == 0:
-        return conflicts
+        return []
 
+    conflicts = []
     max_t = max(len(p) for p in paths) + 1
 
     for t in range(max_t):
@@ -77,32 +75,30 @@ def find_all_conflicts(paths):
 
     return conflicts
 
-
 def make_constraints_from_conflict(conflict):
     """
     Given a conflict, return two constraint sets (one per branch of the CT).
 
     Returns: (constraints_for_agent_i, constraints_for_agent_j)
-    Each constraint set is a set of (agent, constraint_obj) tuples where
-    constraint_obj is either (vertex, t) for vertex constraints
-    or frozenset({(v1,t),(v2,t+1)}) for edge constraints.
+    Each constraint set is a tuple.
+    Format:
+    Vertex: ('vertex', vertex, t)
+    Edge:   ('edge', from_vertex, to_vertex, t)
     """
     kind = conflict[0]
 
     if kind == 'vertex':
         _, i, j, vertex, t = conflict
-        c_i = (i, (vertex, t))   # agent i cannot be at vertex at time t
-        c_j = (j, (vertex, t))   # agent j cannot be at vertex at time t
+        c_i = (i, ('vertex', vertex, t))   # agent i cannot be at vertex at time t
+        c_j = (j, ('vertex', vertex, t))   # agent j cannot be at vertex at time t
         return c_i, c_j
 
     elif kind == 'edge':
         _, i, j, v1, v2, t = conflict
-        # Agent i moves v1->v2 at time t->t+1
-        edge_i = frozenset({(v1, t), (v2, t + 1)})
-        c_i = (i, edge_i)
-        # Agent j moves v2->v1 at time t->t+1
-        edge_j = frozenset({(v2, t), (v1, t + 1)})
-        c_j = (j, edge_j)
+        # Agent i moves v1->v2 at time t->t+1. Agent j moves v2->v1.
+        # Constraint forbids the SPECIFIC directional move at time t.
+        c_i = (i, ('edge', v1, v2, t))
+        c_j = (j, ('edge', v2, v1, t))
         return c_i, c_j
-
-    raise ValueError(f"Unknown conflict type: {kind}")
+    else:
+        raise ValueError("Unknown conflict type")
