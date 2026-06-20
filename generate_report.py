@@ -331,8 +331,8 @@ def build():
     # =========================================================
     # PAGE 6 - Reproducibility Statement + AI Tools Disclosure
     # =========================================================
+    story.append(PageBreak())
     story += [
-        sp(5),
         p('Reproducibility Statement', 'h1'), hr(),
         p('<b>Results reproduced:</b> (1) Success rate of CBS vs. Joint-State-Space A* as a '
           'function of agent count on grid maps, corresponding to the success rate figures in '
