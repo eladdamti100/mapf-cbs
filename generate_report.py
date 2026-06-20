@@ -9,6 +9,7 @@ from reportlab.platypus import (
     PageBreak, Image, HRFlowable
 )
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
+from reportlab.pdfgen import canvas as pdfcanvas
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -18,6 +19,30 @@ OUT_PATH = os.path.join(RESULTS_DIR, 'report.pdf')
 W, H = A4
 MARGIN = 1.8 * cm
 W_INNER = W - 2 * MARGIN
+
+
+class NumberedCanvas(pdfcanvas.Canvas):
+    """Canvas that adds page numbers at the bottom of each page."""
+    def __init__(self, *args, **kwargs):
+        pdfcanvas.Canvas.__init__(self, *args, **kwargs)
+        self._saved_page_states = []
+
+    def showPage(self):
+        self._saved_page_states.append(dict(self.__dict__))
+        self._startPage()
+
+    def save(self):
+        num_pages = len(self._saved_page_states)
+        for state in self._saved_page_states:
+            self.__dict__.update(state)
+            self.draw_page_number(num_pages)
+            pdfcanvas.Canvas.showPage(self)
+        pdfcanvas.Canvas.save(self)
+
+    def draw_page_number(self, page_count):
+        self.setFont('Times-Roman', 10)
+        self.setFillColor(colors.HexColor('#555555'))
+        self.drawCentredString(W / 2, 0.8 * cm, f'{self._pageNumber}')
 
 def S():
     s = {}
@@ -356,7 +381,7 @@ def build():
           '4(2), 144-148.', 'ref'),
     ]
 
-    doc.build(story)
+    doc.build(story, canvasmaker=NumberedCanvas)
     print(f'Report saved: {OUT_PATH}')
 
 if __name__ == '__main__':

@@ -56,7 +56,7 @@ def plot_success_rate(results, title='Success Rate', out_path=None):
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.plot(cbs_counts, cbs_sr, 'b-o', label='CBS', linewidth=2, markersize=6)
     if has_baseline:
-        ax.plot(bl_counts, bl_sr, 'r--s', label='Independent A* (baseline)', linewidth=2, markersize=6)
+        ax.plot(bl_counts, bl_sr, 'r--s', label='Joint A* (baseline)', linewidth=2, markersize=6)
 
     ax.set_xlabel('Number of Agents', fontsize=12)
     ax.set_ylabel('Success Rate (%)', fontsize=12)
@@ -87,7 +87,7 @@ def plot_runtime(results, title='Runtime Comparison', out_path=None):
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.plot(cbs_counts, cbs_rt, 'b-o', label='CBS', linewidth=2, markersize=6)
     if has_baseline:
-        ax.plot(bl_counts, bl_rt, 'r--s', label='Independent A* (baseline)', linewidth=2, markersize=6)
+        ax.plot(bl_counts, bl_rt, 'r--s', label='Joint A* (baseline)', linewidth=2, markersize=6)
 
     ax.set_xlabel('Number of Agents', fontsize=12)
     ax.set_ylabel('Mean Runtime (s) on Solved Instances', fontsize=12)
