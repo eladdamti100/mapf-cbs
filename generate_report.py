@@ -429,18 +429,17 @@ def build():
           'joint search, success rate degrades with agent count, CT nodes grow exponentially. '
           'Absolute numbers differ due to implementation language, grid size, and time limits.'),
         p('<b>Files included:</b> graph.py, tsa_star.py, conflict.py, cbs.py, joint_astar.py, '
-          'benchmark.py, visualize.py, main.py, generate_report.py; '
+          'benchmark.py, visualize.py, main.py; '
           'results/reproduce_open.csv, results/extension_open.csv, '
           'results/extension_warehouse.csv; results/fig1_success_rate.png, '
           'results/fig2_runtime.png, results/fig3_ct_nodes.png, '
-          'results/fig4_topology_success.png; results/report.pdf.'),
+          'results/fig4_topology_success.png.'),
         p('<b>How to run:</b>'),
         p('pip install matplotlib', 'code'),
         p('python main.py --mode reproduce --n-instances 25 --time-limit 30 '
           '--agent-counts 4 6 8 10 12 15 18 20', 'code'),
         p('python main.py --mode extension --n-instances 25 --time-limit 15 '
           '--agent-counts 4 6 8 10 12 15 18 20', 'code'),
-        p('python generate_report.py', 'code'),
         sp(3),
     ]
 
