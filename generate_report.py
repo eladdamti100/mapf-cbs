@@ -51,7 +51,8 @@ def S():
     s['cap']   = ParagraphStyle('cap',   fontName='Times-Italic', fontSize=9,  leading=12, alignment=TA_CENTER, spaceAfter=3, spaceBefore=2)
     s['code']  = ParagraphStyle('code',  fontName='Courier',      fontSize=8,  leading=12, leftIndent=12, spaceAfter=3, wordWrap='LTR')
     s['abl']   = ParagraphStyle('abl',   fontName='Times-Bold',   fontSize=12, leading=15, alignment=TA_CENTER, spaceAfter=3)
-    s['ref']   = ParagraphStyle('ref',   fontName='Times-Roman',  fontSize=12, leading=16, spaceAfter=6, alignment=TA_JUSTIFY, leftIndent=18, firstLineIndent=-18)
+    s['bodyl'] = ParagraphStyle('bodyl', fontName='Times-Roman',  fontSize=12, leading=15, spaceAfter=4, alignment=TA_LEFT)
+    s['ref']   = ParagraphStyle('ref',   fontName='Times-Roman',  fontSize=12, leading=16, spaceAfter=6, alignment=TA_LEFT, leftIndent=18, firstLineIndent=-18)
     return s
 
 
@@ -433,7 +434,7 @@ def build():
           'results/reproduce_open.csv, results/extension_open.csv, '
           'results/extension_warehouse.csv; results/fig1_success_rate.png, '
           'results/fig2_runtime.png, results/fig3_ct_nodes.png, '
-          'results/fig4_topology_success.png.'),
+          'results/fig4_topology_success.png.', 'bodyl'),
         p('<b>How to run (commands must be typed on one line each):</b>'),
         p('Step 1 - Install dependency:', 'body'),
         p('pip install matplotlib', 'code'),
