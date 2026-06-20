@@ -28,7 +28,7 @@ MAPS_DIR = os.path.join(BASE_DIR, 'maps')
 INSTANCES_DIR = os.path.join(BASE_DIR, 'instances')
 
 from graph import Grid
-from cbs import cbs, independent_astar
+from cbs import cbs
 from benchmark import (
     make_open_grid, make_warehouse_grid,
     generate_instance, run_experiment, save_results, save_map,

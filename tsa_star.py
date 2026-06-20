@@ -2,20 +2,15 @@
 Time-Space A* (TSA*) — low-level search for CBS.
 
 State: (vertex, timestep)
-Constraints: set of (vertex, timestep) pairs the agent must avoid,
-             plus edge constraints as frozensets {(v1,t), (v2,t+1)}.
-
 Returns the shortest path (list of vertices) for one agent respecting
 its constraint set C, or None if no path exists within max_t steps.
 """
 
 import heapq
 
-
 def heuristic(v, goal):
     """Manhattan distance — admissible on 4-connected grids."""
     return abs(v[0] - goal[0]) + abs(v[1] - goal[1])
-
 
 def tsa_star(graph, start, goal, constraints, max_t=200):
     """
@@ -24,36 +19,35 @@ def tsa_star(graph, start, goal, constraints, max_t=200):
     graph       : Grid instance
     start       : (x, y) start vertex
     goal        : (x, y) goal vertex
-    constraints : set of (vertex, timestep) tuples for vertex constraints
-                  AND frozenset({(v_from, t), (v_to, t+1)}) for edge constraints
+    constraints : set of constraints.
+                  Format: ('vertex', vertex, t) OR ('edge', from_v, to_v, t)
     max_t       : hard cap on timesteps to prevent infinite loops
 
     Returns
     -------
-    List of vertices [(x,y), ...] from start to goal (length = makespan+1),
-    or None if no path found.
+    List of vertices [(x,y), ...] from start to goal, or None if no path found.
     """
-    # Separate vertex and edge constraints for fast lookup
-    vertex_constraints = set()   # (vertex, t)
-    edge_constraints = set()     # frozenset({(v1,t1),(v2,t2)})
+    vertex_constraints = set()   
+    edge_constraints = set()     
 
     for c in constraints:
-        if isinstance(c, frozenset):
-            edge_constraints.add(c)
-        else:
-            vertex_constraints.add(c)
+        kind = c[0]
+        if kind == 'vertex':
+            _, v, t = c
+            vertex_constraints.add((v, t))
+        elif kind == 'edge':
+            _, u, v, t = c
+            edge_constraints.add((u, v, t))
 
-    # Handle trivial case: start == goal with no constraint at t=0
+    # Trivial case: already at goal and no constraints force us to leave
     if start == goal and (start, 0) not in vertex_constraints:
         return [start]
 
     # open heap: (f, g, vertex, timestep)
     h0 = heuristic(start, goal)
     open_heap = [(h0, 0, start, 0)]
-    # came_from[(vertex, t)] = (prev_vertex, prev_t)
     came_from = {}
     g_score = {(start, 0): 0}
-    # Track expanded states to avoid re-expanding
     closed = set()
 
     while open_heap:
@@ -64,15 +58,20 @@ def tsa_star(graph, start, goal, constraints, max_t=200):
         closed.add((v, t))
 
         if v == goal:
-            # Reconstruct path (list of vertices)
-            path = []
-            cur = (v, t)
-            while cur in came_from:
-                path.append(cur[0])
-                cur = came_from[cur]
-            path.append(start)
-            path.reverse()
-            return path
+            # FIX: Only stop at the goal if there are NO future constraints forcing us to move.
+            future_constraints = [c_time for (c_vertex, c_time) in vertex_constraints 
+                                  if c_vertex == goal and c_time > t]
+            
+            if not future_constraints:
+                # Safe to rest here forever. Reconstruct path.
+                path = []
+                cur = (v, t)
+                while cur in came_from:
+                    path.append(cur[0])
+                    cur = came_from[cur]
+                path.append(start)
+                path.reverse()
+                return path
 
         if t >= max_t:
             continue
@@ -84,9 +83,8 @@ def tsa_star(graph, start, goal, constraints, max_t=200):
             if (nb, nt) in vertex_constraints:
                 continue
 
-            # Check edge constraint (swap conflict)
-            edge = frozenset({(v, t), (nb, nt)})
-            if edge in edge_constraints:
+            # Check directional edge constraint
+            if (v, nb, t) in edge_constraints:
                 continue
 
             new_g = g + 1
@@ -96,4 +94,4 @@ def tsa_star(graph, start, goal, constraints, max_t=200):
                 f_new = new_g + heuristic(nb, goal)
                 heapq.heappush(open_heap, (f_new, new_g, nb, nt))
 
-    return None  # no path found
+    return None

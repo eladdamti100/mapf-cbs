@@ -15,7 +15,8 @@ import json
 import time
 
 from graph import Grid
-from cbs import cbs, independent_astar
+from cbs import cbs
+from joint_astar import run_joint_astar
 
 
 # ---------------------------------------------------------------------------
@@ -158,9 +159,9 @@ def run_experiment(
                 'cbs_ll_calls': cbs_result['low_level_calls'],
             }
 
-            # Run baseline
+            # Run baseline — Joint-State A* (true paper baseline)
             if run_baseline:
-                bl_result = independent_astar(
+                bl_result = run_joint_astar(
                     graph=grid, starts=starts, goals=goals, time_limit=time_limit
                 )
                 if bl_result['success']:
