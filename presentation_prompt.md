@@ -1,204 +1,252 @@
-# Presentation Creation Prompt for Gemini
+# Presentation Creation Prompt for Gemini - Version 2
 
-Please create a professional academic presentation (PowerPoint / Google Slides) with exactly 12 slides based on the content below.
+Please create a professional academic presentation with EXACTLY 12 slides. No extra slides (no "Image Sources" slide, no appendix).
 
-**Style instructions:**
-- Clean academic style, white or dark navy background
-- Times New Roman or similar serif font for body text
-- Each slide has a clear title and bullet points (no walls of text)
-- Use diagrams/visuals where indicated
-- Font size: titles 28-32pt, bullets 18-22pt
-- Color accent: blue (#1a4f8a) for highlights
+**CRITICAL RULES:**
+- Do NOT write LaTeX math notation like $O(|V|^k)$ - write it as plain text: O(|V|^k)
+- Do NOT use external images that might fail to load - draw diagrams using shapes/text boxes only
+- Do NOT add extra slides beyond the 12 listed
+- Every table must show ALL rows listed - do not skip any rows
+- No "$" signs anywhere in the presentation
+
+**Style:**
+- White background with dark navy blue (#1a3a5c) top border bar on every slide
+- Title font: bold, dark navy (#1a3a5c), 28-32pt
+- Body font: regular, dark gray, 18-20pt
+- Accent color for highlights: medium blue (#2d6aa0)
+- Page number bottom right corner on every slide
 
 ---
 
-## SLIDE 1 - Title Slide
+## SLIDE 1 - Title
 
-**Title:** Conflict-Based Search for Optimal Multi-Agent Path Finding
+**Layout:** Centered, logo top center
 
-**Subtitle:** A Reproduction and Extension Study
-
-**Bottom line:**
-- Nimrod Netzer | Elad Damti | Kfir Dahan
-- Search in Artificial Intelligence - Bar-Ilan University, 2026
-- Based on: Sharon, Stern, Felner & Sturtevant (2015), Artificial Intelligence Journal
-
-**Visual:** Simple robot/warehouse icon or grid with agents moving
+**Content:**
+- [Bar-Ilan University logo at top]
+- Main title (large, bold, navy): **Conflict-Based Search for Optimal Multi-Agent Path Finding**
+- Subtitle (smaller, gray): A Reproduction and Extension Study
+- Authors: Nimrod Netzer | Elad Damti | Kfir Dahan
+- Course: Search in Artificial Intelligence - Bar-Ilan University, 2026
+- Reference: Based on: Sharon, Stern, Felner & Sturtevant (2015), Artificial Intelligence Journal
 
 ---
 
 ## SLIDE 2 - What is MAPF?
 
-**Title:** Multi-Agent Path Finding (MAPF)
+**Layout:** Left side bullets, right side visual
 
-**Bullets:**
+**Left side bullets:**
 - k agents on a shared graph G = (V, E)
-- Each agent has a start position and a goal position
-- Agents move one step per timestep, or wait
-- No two agents may occupy the same vertex at the same time (vertex conflict)
-- No two agents may swap positions in one step (edge conflict)
-- Objective: minimize Sum of Costs (SOC) = total steps across all agents
+- Each agent: start position si, goal position gi
+- Actions: move to adjacent vertex OR wait
+- No two agents at same vertex same time (Vertex Conflict)
+- No two agents swap positions (Edge Conflict)
+- Objective: minimize Sum of Costs (SOC) = total steps all agents
 
-**Visual:** Small 5x5 grid showing 3 agents (colored circles) with arrows toward their goals. Label starts S1, S2, S3 and goals G1, G2, G3.
+**Right side visual - draw using shapes (NO external image):**
+Draw a 5x5 grid using table or shapes. Place:
+- Blue circle labeled "A1" at cell (0,0), green circle "A2" at (4,0), red circle "A3" at (0,4)
+- Blue star "G1" at (4,4), green star "G2" at (0,4), red star "G3" at (4,0)
+- Draw arrows showing paths
 
-**Real-world applications (small icons row):**
-- Amazon warehouse robots
-- Airport ground traffic control
-- Railway scheduling
-- Video game AI
+**Bottom row - 4 text boxes with icons:**
+Warehouse | Airport | Railway | Video Games
 
 ---
 
-## SLIDE 3 - Why is Optimal MAPF Hard?
+## SLIDE 3 - Why is MAPF Hard?
 
-**Title:** Joint State Space Explodes Exponentially
+**Layout:** Left side text+table, right side highlighted box
 
-**Bullets:**
-- Naive approach: search all agents together in one joint state space
-- Joint state space size = O(|V|^k)
-- Example: k=10 agents, |V|=5 vertices → ~9.7 million states
-- For k=30 agents on a realistic map → completely infeasible
+**Title:** Why is Optimal MAPF Hard?
 
-**Table (3 rows, 2 cols):**
-| Agents (k) | Joint State Space Size |
+**Left side:**
+
+Text: "Naive approach: search all agents jointly in one state space"
+
+State space size = O(|V|^k)  [write exactly like this, no dollar signs]
+
+Table (show all 3 rows):
+| Agents (k) | State Space Size |
 |---|---|
 | 2 | ~25 |
 | 10 | ~9,765,625 |
-| 30 | astronomical |
+| 30 | Infeasible |
 
-**Our experiment result (highlighted box):**
-> Joint A* solved only 32% of 6-agent instances and 0% of 8-agent instances within 5 seconds
+**Right side - blue highlighted box:**
+Title: Our Experiment Confirms This:
+
+"Joint A* solved only 32% of 6-agent instances"
+"Joint A* solved 0% of 8-agent instances (within 5 seconds)"
+
+Bottom text: Standard A* cannot scale to realistic agent counts
 
 ---
 
 ## SLIDE 4 - Conflict Types
 
+**Layout:** Three equal columns with rounded boxes
+
 **Title:** Types of Conflicts Between Agents
 
-**Two main conflicts we handle (with diagram for each):**
+**Column 1 - Vertex Conflict (draw with shapes):**
+- Draw two small grids side by side showing timestep t
+- In each grid, show two colored arrows pointing to the SAME cell
+- Label: "Agent A1 and A2 at same cell at time t"
+- Definition: Two agents occupy the same vertex at the same timestep
 
-**Vertex Conflict:**
-- Two agents at the SAME vertex at the SAME timestep
-- Diagram: two arrows pointing to same cell at t=3
+**Column 2 - Edge Conflict (draw with shapes):**
+- Draw two cells with arrows going in OPPOSITE directions between them
+- Arrow 1: left cell -> right cell (blue)
+- Arrow 2: right cell -> left cell (red)
+- Label: "Agents cross same edge in opposite directions between t and t+1"
+- Definition: Also called Swap Conflict
 
-**Edge Conflict (Swap):**
-- Two agents crossing the SAME edge in OPPOSITE directions
-- Diagram: two arrows crossing between two cells between t=2 and t=3
+**Column 3 - Other Types:**
+- Following Conflict
+- Cycle Conflict
+- Swapping Conflict
 
-**Other conflict types (smaller, just listed):**
-- Following conflict - one agent follows another on same edge
-- Cycle conflict - cyclic dependency between agents
-- Swapping conflict - agents exchange positions
-
-**Note at bottom:** We implement vertex + edge conflict detection - sufficient for correctness and optimality
+**Bottom note (italic, centered):**
+We implement Vertex + Edge conflict detection - sufficient for correctness and optimality
 
 ---
 
-## SLIDE 5 - CBS: Two-Level Algorithm
+## SLIDE 5 - CBS Overview
 
-**Title:** Conflict-Based Search (CBS) - Overview
+**Layout:** Two large boxes side by side, key insight at bottom
 
-**Visual: Two-level diagram**
+**Title:** Conflict-Based Search (CBS) - Two-Level Algorithm
 
-```
-HIGH LEVEL: Constraint Tree (CT)
-    - Best-first search by Sum of Costs
-    - Each node = set of constraints per agent
-    - Branch on detected conflicts
+**Left box (navy background, white text) - HIGH LEVEL: Constraint Tree (CT):**
+- Best-first search ordered by Sum of Costs
+- Each CT node stores: constraints per agent + paths + SOC
+- Branches on detected conflicts
+- Searches only conflicts that actually occur
 
-        ↕ (calls)
+**Right box (light blue background, dark text) - LOW LEVEL: Time-Space A* (TSA*):**
+- Plans ONE agent at a time
+- State = (vertex v, timestep t)
+- Checks constraints before expanding each state
+- Heuristic = Manhattan distance (admissible -> optimal)
 
-LOW LEVEL: Time-Space A* (TSA*)
-    - Plans ONE agent at a time
-    - State = (vertex v, timestep t)
-    - Respects agent's constraint set
-    - Heuristic = Manhattan distance (admissible)
-```
+**Arrow between boxes pointing both ways labeled: "calls / returns path"**
 
-**Key insight (highlighted):**
-> Instead of searching all agents jointly, CBS plans agents independently and resolves only the conflicts that actually occur
+**Bottom highlighted box (blue border):**
+Key Insight: Instead of searching all agents jointly (exponential), CBS plans independently and resolves only actual conflicts
 
 ---
 
 ## SLIDE 6 - Time-Space A* (Low Level)
 
+**Layout:** Left side bullets, right side diagram drawn with shapes
+
 **Title:** Low Level: Time-Space A* (TSA*)
 
-**Bullets:**
+**Left side bullets:**
 - State = (vertex v, timestep t) - time is part of the state
-- Vertex constraint (v, t): agent i forbidden at vertex v at time t
-- Edge constraint: agent i forbidden from moving along edge (u→v) at time t
-- Heuristic h = Manhattan distance to goal (admissible → optimal)
-- Future constraint check at goal: before stopping, verify no future constraints exist at goal vertex
+- Vertex constraint (v, t): agent forbidden at vertex v at time t
+- Edge constraint: agent forbidden from move (u -> v) at time t
+- Heuristic h = Manhattan distance to goal (admissible -> optimal path guaranteed)
+- Future constraint check: before stopping at goal, verify no future constraints at goal vertex
 
-**Visual: Small diagram**
-- Show a path on a 4x4 grid
-- One cell marked with X at t=3 (constraint)
-- Agent path curves around it
+- Implemented in: tsa_star.py
 
-**Implemented in:** `tsa_star.py`
+**Right side - draw a 4x4 grid using table/shapes:**
+- Show a grid with cells labeled by coordinates
+- Mark cell (2,1) with a red X and label "Constraint at t=3"
+- Draw a blue path that goes AROUND the constraint cell
+- Label the path "Agent path avoiding constraint"
+- Put a green star at the goal cell (3,3)
 
 ---
 
-## SLIDE 7 - CBS High Level: CT Branching
+## SLIDE 7 - CT Branching (High Level)
 
-**Title:** High Level: Constraint Tree (CT)
+**Layout:** Left side numbered steps, right side CT tree diagram drawn with shapes
 
-**Step-by-step (numbered list):**
+**Title:** High Level: Constraint Tree (CT) - How CBS Branches
+
+**Left side numbered list:**
 1. Root node: plan each agent independently with TSA*
-2. Find first conflict between any two agents
-3. If no conflict → return solution (OPTIMAL!)
-4. Conflict found (agents i, j at vertex v, time t) → create 2 children:
-   - Left child: constrain agent i (forbidden at v, t)
-   - Right child: constrain agent j (forbidden at v, t)
-5. Replan only the constrained agent with TSA*
-6. Push both children to min-heap ordered by Sum of Costs
+2. Find first conflict (agents Ai, Aj at vertex v, time t)
+3. If NO conflict -> return solution (OPTIMAL!)
+4. Create 2 child CT nodes:
+   - Left child: forbid agent Ai at (v, t)
+   - Right child: forbid agent Aj at (v, t)
+5. Replan ONLY the constrained agent with TSA*
+6. Push both children to min-heap by SOC
 7. Repeat from step 2
 
-**Visual: Small CT tree diagram**
-- Root at top (no constraints, SOC=10)
-- Two children: left (constrain A1, SOC=11), right (constrain A2, SOC=12)
-- Arrow pointing to left child as "expanded next"
+**Right side - draw CT tree with shapes:**
 
-**Guarantee:** CBS is complete and optimal [Sharon et al., 2015]
+Draw 3 boxes connected by lines:
+
+TOP BOX (navy border):
+"ROOT
+No constraints
+SOC = 10"
+
+BOTTOM LEFT BOX (blue border):
+"Constrain A1
+forbidden at (3,2) t=4
+SOC = 11
+<- Expand next (lowest cost)"
+
+BOTTOM RIGHT BOX (gray border):
+"Constrain A2
+forbidden at (3,2) t=4
+SOC = 12"
+
+Lines connecting root to both children. Arrow pointing to left box labeled "expand next"
+
+**Bottom text:** CBS is complete and optimal [Sharon et al., 2015]
 
 ---
 
 ## SLIDE 8 - Our Implementation
 
-**Title:** Our Implementation - Python from Scratch
+**Layout:** Full-width table, key choices below
 
-**Module table:**
-| File | Role |
-|---|---|
-| graph.py | 4-connected Grid with obstacles |
-| tsa_star.py | Time-Space A* (Nimrod) |
-| conflict.py | Vertex + edge conflict detection (Elad) |
-| cbs.py | CT node, CBS main loop (Elad) |
-| joint_astar.py | Joint A* baseline (Kfir) |
-| benchmark.py | Map generators, experiment runner (Kfir) |
-| visualize.py | Result plots (Kfir) |
+**Title:** Our Implementation - Python 3.13 from Scratch
 
-**Key choices:**
-- Baseline: Joint-State-Space A* (searches all agents simultaneously - correct baseline)
-- Goal model: agents stay at goal indefinitely (paths padded for conflict checking)
-- Conflict selection: first conflict by timestep, then agent pair (i < j)
-- All experiments deterministic (seed = 42 + n_agents * 1000 + instance_index)
+**Table (show ALL 7 rows):**
+| File | Role | Lead |
+|---|---|---|
+| graph.py | 4-connected Grid with obstacles | Team |
+| tsa_star.py | Time-Space A* search | Nimrod |
+| conflict.py | Vertex + Edge conflict detection | Elad |
+| cbs.py | CT node management and CBS main loop | Elad |
+| joint_astar.py | Joint-State-Space A* baseline | Kfir |
+| benchmark.py | Map generators and experiment runner | Kfir |
+| visualize.py | Result plots and graphs | Kfir |
 
-**Hardware:** Intel Core i7-1255U, 16 GB RAM, Python 3.13
+**Below table - two columns:**
+
+Left - Key Implementation Choices:
+- Baseline: Joint A* (not Independent A* - searches all agents simultaneously)
+- Goal model: agents stay at goal, paths padded for conflict checking
+- Conflict selection: first by timestep, then agent pair (i < j)
+- All experiments deterministic (fixed seeds)
+
+Right - Hardware and Software:
+- Intel Core i7-1255U, 10 cores, 1.70 GHz
+- 16 GB RAM, Windows 11 Home
+- Python 3.13, matplotlib 3.11
+- No external MAPF libraries
 
 ---
 
 ## SLIDE 9 - Reproduction Results
 
-**Title:** Result 1: CBS Outperforms Joint A* - Success Rate
+**Layout:** Full table on left, highlighted finding on right
 
-**Setup:**
-- Map: 20x20 open grid, 10% random obstacles
-- 25 instances per agent count, agent counts: 4, 6, 8, 10, 12, 15, 18, 20
-- CBS time limit: 30s | Joint A* time limit: 5s
+**Title:** Result 1: CBS vs Joint A* - Success Rate
 
-**Table:**
+**Setup line:** 20x20 open grid | 25 instances per count | CBS limit: 30s | Joint A* limit: 5s
+
+**Table (show ALL 8 rows - do not skip any):**
 | Agents | CBS Success | Joint A* Success | CBS CT Nodes |
 |---|---|---|---|
 | 4 | 100% | 100% | 1.7 |
@@ -210,97 +258,112 @@ LOW LEVEL: Time-Space A* (TSA*)
 | 18 | 64% | 0% | 251.3 |
 | 20 | 60% | 0% | 716.3 |
 
-**Key finding (highlighted box):**
-> Joint A* fails completely from 8 agents onward. CBS maintains 60%+ success even at 20 agents.
+**Right side - two highlighted boxes:**
 
-**Note:** Matches paper's trend - quantitative differences due to Python vs C++ and smaller grid
+Box 1 (navy background, white text):
+"Joint A* fails completely
+from 8 agents onward (0%)"
+
+Box 2 (light blue background):
+"CBS maintains 60%+ success
+even at 20 agents"
+
+**Bottom note:** Matches Sharon et al. (2015) trends. Quantitative differences due to Python vs C++ and smaller 20x20 grid.
 
 ---
 
-## SLIDE 10 - Extension: Map Topology Study
+## SLIDE 10 - Extension Results
+
+**Layout:** Left side two grid diagrams (drawn with shapes), right side table + explanation
 
 **Title:** Extension: Does Map Topology Affect CBS?
 
-**Research question:**
-> Do warehouse maps with narrow bottleneck corridors reduce CBS performance compared to open grids?
+**Research question (italic, top):** Do warehouse bottleneck corridors reduce CBS success vs open grids?
 
-**Two map types:**
-- Open Grid: 20x20, ~10% random obstacles
-- Warehouse Grid: 20x20, alternating shelf rows with single-cell corridors every 4 columns
+**Left side - draw TWO grid diagrams using shapes/tables:**
 
-**Visual: Two small grid diagrams side by side**
-- Left: open grid with scattered black squares
-- Right: warehouse grid with rows of black squares and narrow gaps
+Grid 1 - OPEN GRID (label above: "Open Grid - 10% random obstacles"):
+- Draw a 6x6 table representing the grid
+- Randomly fill ~6 cells with dark gray (obstacles)
+- Rest stays white
+- Label "20x20 in experiments"
 
-**Results at 20 agents:**
-| Metric | Open Grid | Warehouse | Difference |
+Grid 2 - WAREHOUSE GRID (label above: "Warehouse Grid - shelf rows with narrow corridors"):
+- Draw a 6x6 table
+- Fill entire rows 1, 3, 5 with dark gray EXCEPT one cell in each row (the corridor)
+- Label "20x20 in experiments"
+
+**Right side:**
+
+Results at 20 agents table:
+| Metric | Open Grid | Warehouse | Ratio |
 |---|---|---|---|
-| Success rate | 64% | 28% | -36% |
-| Mean CT nodes | 877 | 3,258 | 3.7x more |
-| Mean runtime | 1.54s | 3.14s | 2x slower |
+| Success Rate | 64% | 28% | -36% |
+| Mean CT Nodes | 877 | 3,258 | 3.7x more |
+| Mean Runtime | 1.54s | 3.14s | 2x slower |
 
-**Why?** Narrow corridors force agents onto the same cells → more vertex conflicts → deeper CT tree → cascade of detours → even more conflicts
+**Explanation chain (use arrows between boxes):**
+[Narrow corridors] -> [Agents forced to same cells] -> [More vertex conflicts] -> [Deeper CT tree] -> [Cascade of detours] -> [3.7x more CT expansions]
 
 ---
 
-## SLIDE 11 - Key Findings
+## SLIDE 11 - Summary of Results
+
+**Layout:** Three equal boxes at top, limitation at bottom
 
 **Title:** Summary of Results
 
-**Three main findings:**
+**Box 1 (navy left border, light background):**
+Title: Finding 1 - CBS Scales, Joint A* Does Not
+- CBS: 100% success at 4 agents, 60% at 20 agents
+- Joint A*: 32% at 6 agents, 0% from 8 agents onward
+- CBS finds provably optimal conflict-free paths
 
-**Finding 1 - CBS works and scales:**
-- CBS finds provably optimal, collision-free solutions
-- Succeeds at 100% for 4 agents, 60% for 20 agents
-- Joint A* fails completely from 8 agents onward
-
-**Finding 2 - Map topology matters:**
-- Warehouse maps reduce CBS success from 64% to 28% at 20 agents
-- CT nodes expand 3.7x more on warehouse maps
+**Box 2 (navy left border, light background):**
+Title: Finding 2 - Map Topology Matters
+- Warehouse maps: 64% -> 28% success at 20 agents
+- CT nodes: 877 (open) vs 3,258 (warehouse) = 3.7x more
 - Direct practical implication for warehouse robotics
 
-**Finding 3 - Correct reproduction:**
+**Box 3 (navy left border, light background):**
+Title: Finding 3 - Reproduction Validated
 - Qualitative trends match Sharon et al. (2015) exactly
-- Quantitative differences explained by Python vs C++ (~10-50x slower) and smaller grid size
+- Quantitative gaps explained by Python vs C++ (~10-50x slower)
+- Grid size: 20x20 vs larger Moving AI benchmarks
 
-**Limitation:** Basic CBS only - paper's improvements (Prioritizing Conflicts, CBS with Heuristics) would extend scalable range
+**Bottom box (orange/yellow background):**
+Limitation: We implemented basic CBS only. CBS improvements (Prioritizing Conflicts, High-Level Heuristics) would extend the solvable range beyond 20 agents.
 
 ---
 
 ## SLIDE 12 - Conclusion
 
+**Layout:** Centered, clean
+
 **Title:** Conclusion
 
-**What we did:**
-- Implemented CBS from scratch in Python (7 modules, ~800 lines)
-- Reproduced 2 central results from Sharon et al. (2015)
-- Extended the study with a warehouse map topology comparison
-
-**Main takeaways:**
+**Three bullets:**
 - CBS elegantly avoids exponential joint state space by planning agents separately and resolving only actual conflicts
-- Warehouse bottlenecks create cascading conflicts that dramatically amplify CBS difficulty
-- CBS improvements (Conflict Prioritization, High-Level Heuristics) are especially needed in structured environments
+- Warehouse map bottlenecks create cascading vertex conflicts that dramatically amplify CBS difficulty (3.7x more CT nodes)
+- Our Python implementation successfully reproduces Sharon et al. (2015) qualitative trends
 
-**Future work:**
-- Apply CBS improvements to warehouse maps where gap is largest
-- Test on standard Moving AI benchmark maps
-- Compare Disjoint Splitting variant
+**Large centered box (navy border, blue text inside):**
+CBS: Optimal, complete, and practically scalable - but map topology is critical
 
-**Bottom line (large, centered):**
-> CBS: optimal, complete, and practically scalable - but map topology is critical
+**Future work (small text):**
+- Apply CBS improvements to warehouse maps
+- Test on Moving AI standard benchmark maps
 
-**Team line:** Nimrod Netzer | Elad Damti | Kfir Dahan - Ready for the defense!
+**Bottom centered, bold navy:**
+Nimrod Netzer | Elad Damti | Kfir Dahan - Ready for the Defense!
 
 ---
 
-## DESIGN NOTES FOR GEMINI
+## IMPORTANT NOTES FOR GEMINI
 
-- Slides 1, 12: full visual layout, centered
-- Slides 2, 4, 8, 11: bullet-heavy, clean layout
-- Slides 3, 9, 10: include tables prominently
-- Slides 5, 6, 7: include diagrams/visuals (described above)
-- Slide 5: two-box diagram (HIGH LEVEL / LOW LEVEL with arrow between)
-- Slide 7: small tree diagram with 3 nodes (root + 2 children)
-- Consistent color scheme throughout: white background, blue headers (#1a4f8a), black body text
-- Page numbers bottom right on every slide
-- University logo top right if available
+1. EXACTLY 12 slides total - no Image Sources slide, no appendix slide
+2. All diagrams in slides 4, 6, 7, 10 must be drawn using PowerPoint/Slides SHAPES only - no external images
+3. Slide 9 table must have ALL 8 rows (agents 4, 6, 8, 10, 12, 15, 18, 20)
+4. No LaTeX notation ($, ^, \to etc.) - use plain text only
+5. Slide 10 grid diagrams must be drawn with table cells colored, not images from the internet
+6. The presentation already exists with good styling - keep the same navy/white theme from slides 1-12
