@@ -101,7 +101,8 @@ def mode_reproduce(args):
     print("=== Reproducing Sharon et al. 2015 Results ===")
     print(f"Map: {args.width}x{args.height} open grid, {args.obstacle_pct*100:.0f}% obstacles")
     print(f"Instances per agent count: {args.n_instances}")
-    print(f"Time limit: {args.time_limit}s")
+    print(f"CBS time limit: {args.time_limit}s")
+    print(f"Joint A* baseline time limit: {args.baseline_time_limit or args.time_limit}s")
     print(f"Agent counts: {args.agent_counts}")
     print()
 
@@ -113,6 +114,7 @@ def mode_reproduce(args):
         agent_counts=args.agent_counts,
         n_instances=args.n_instances,
         time_limit=args.time_limit,
+        baseline_time_limit=args.baseline_time_limit,
         seed_base=42,
         run_baseline=True,
         verbose=True,
@@ -205,6 +207,10 @@ def parse_args():
     parser.add_argument('--obstacle-pct', type=float, default=0.1, dest='obstacle_pct')
     parser.add_argument('--n-instances', type=int, default=25, dest='n_instances')
     parser.add_argument('--time-limit', type=float, default=60.0, dest='time_limit')
+    parser.add_argument('--baseline-time-limit', type=float, default=None,
+                        dest='baseline_time_limit',
+                        help='Time limit for the Joint A* baseline (reproduce mode). '
+                             'Defaults to --time-limit if not given.')
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument(
         '--agent-counts', type=int, nargs='+',

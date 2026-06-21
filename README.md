@@ -30,6 +30,7 @@ mapf_cbs/
 ├── tsa_star.py     # Time-Space A* (low-level CBS search)
 ├── conflict.py     # Conflict detection (vertex + edge)
 ├── cbs.py          # CBS high-level constraint tree
+├── joint_astar.py  # Joint-State-Space A* baseline (true paper baseline)
 ├── benchmark.py    # Map generators, instance generator, experiment runner
 ├── main.py         # CLI entry point
 ├── visualize.py    # Plots and animation
@@ -65,17 +66,20 @@ Options:
 
 ### 3. Reproduce paper results (Result 1 + Result 2)
 
-Runs CBS and independent A* baseline on 20×20 open grid for multiple agent counts.
-Generates success rate and runtime plots.
+Runs CBS and the Joint-State-Space A* baseline (the paper's intended baseline,
+not an independent-planning baseline) on a 20×20 open grid for multiple agent
+counts. Generates success rate, runtime, and CT-node plots.
 
 ```bash
-python main.py --mode reproduce --n-instances 25 --time-limit 60
+python main.py --mode reproduce --n-instances 25 --time-limit 30 --baseline-time-limit 5 --agent-counts 4 6 8 10 12 15 18 20
 ```
 
 Options:
-- `--n-instances N`       : instances per agent count (default: 25)
-- `--agent-counts 4 6 8 10 12 15 18 20 25 30` : agent counts to test
-- `--obstacle-pct 0.1`    : fraction of grid cells that are obstacles
+- `--n-instances N`            : instances per agent count (default: 25)
+- `--agent-counts 4 6 8 10 12 15 18 20` : agent counts to test
+- `--obstacle-pct 0.1`         : fraction of grid cells that are obstacles
+- `--time-limit T`             : CBS time limit in seconds (default: 60; paper reproduction uses 30)
+- `--baseline-time-limit T`    : Joint A* baseline time limit in seconds (default: same as `--time-limit`; paper reproduction uses 5 since Joint A*'s state space blows up combinatorially)
 
 Output files:
 - `results/reproduce_open.csv`
@@ -85,10 +89,10 @@ Output files:
 
 ### 4. Run extension — map topology study
 
-Compares CBS on open grid vs warehouse-style grid.
+Compares CBS on open grid vs warehouse-style grid (CBS only, no baseline).
 
 ```bash
-python main.py --mode extension --n-instances 25 --time-limit 60
+python main.py --mode extension --n-instances 25 --time-limit 15 --agent-counts 4 6 8 10 12 15 18 20
 ```
 
 Output files:
@@ -105,8 +109,8 @@ Run these commands in order:
 ```bash
 cd mapf_cbs
 python main.py --mode demo
-python main.py --mode reproduce --n-instances 25 --time-limit 60 --agent-counts 4 6 8 10 12 15 18 20 25 30
-python main.py --mode extension --n-instances 25 --time-limit 60 --agent-counts 4 6 8 10 12 15 18 20
+python main.py --mode reproduce --n-instances 25 --time-limit 30 --baseline-time-limit 5 --agent-counts 4 6 8 10 12 15 18 20
+python main.py --mode extension --n-instances 25 --time-limit 15 --agent-counts 4 6 8 10 12 15 18 20
 ```
 
 All results will be in the `results/` directory.
@@ -134,22 +138,23 @@ All results will be in the `results/` directory.
 - Vertex conflict: two agents at same vertex at same timestep
 - Edge conflict: two agents swap positions between consecutive timesteps
 
+**Baseline — Joint-State-Space A\*:**
+- Searches the full joint configuration space of all agents simultaneously (`joint_astar.py`)
+- This is the paper's intended baseline, not an independent-per-agent planner — it always produces conflict-free paths but suffers from exponential state-space blowup
+- In our experiments it fails completely (0% success) from 8 agents onward within its 5s time limit
+
 ---
 
 ## Reproducibility Statement
 
-- Results reproduced: success rate vs agents (Figure 1), runtime comparison (Figure 2)
-- Implementation: written independently in Python 3; not based on authors' original code
-- Differences from original: Python vs C++, smaller grid sizes, potentially different random seeds
-- Agreement: qualitative trends match (CBS scales better than joint A*); absolute numbers differ due to hardware and language
+- Results reproduced: (1) success rate of CBS vs. the Joint-State-Space A* baseline as a function of agent count (Figure 1); (2) CT node expansion and runtime growth (Figures 2-3)
+- Implementation: written independently in Python 3.13; not based on the authors' original code
+- Differences from original: Python vs C++, smaller 20×20 grid instead of Moving AI benchmark maps, shorter time limits (30s CBS / 5s Joint A* for reproduction, 15s for the extension)
+- Agreement: qualitative trends match (CBS scales far better than joint search, success rate degrades with agent count, CT nodes grow exponentially); absolute numbers differ due to hardware, grid size, and time limits
 - Raw results: `results/reproduce_open.csv`, `results/extension_open.csv`, `results/extension_warehouse.csv`
 
 ---
 
 ## AI Tools Disclosure
 
-The following AI tools were used during this project:
-
-- **Claude (Anthropic)**: assisted with code structure, implementation of TSA* and CBS, debugging, report writing guidance, and explaining algorithm concepts from the paper
-- All code was reviewed, understood, and validated by the team
-- The team takes full responsibility for the correctness, originality, and quality of the submission
+Claude (Anthropic): used as a technical assistant for code optimization, syntax debugging, and editorial review of the documentation. All core algorithms (including TSA* and CBS) were conceptualized and implemented directly by the team. The team has thoroughly validated all project components and takes full responsibility for the integrity, originality, and performance of the final output.

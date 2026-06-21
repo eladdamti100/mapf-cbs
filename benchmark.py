@@ -119,16 +119,23 @@ def run_experiment(
     agent_counts,
     n_instances=25,
     time_limit=60.0,
+    baseline_time_limit=None,
     seed_base=42,
     run_baseline=True,
     verbose=True,
 ):
     """
     For each agent count in agent_counts, generate n_instances random instances
-    and run CBS (and optionally the independent A* baseline).
+    and run CBS (and optionally the Joint-State A* baseline).
+
+    baseline_time_limit defaults to time_limit if not given separately
+    (the Joint A* baseline typically needs a much shorter cap since its
+    state space blows up combinatorially).
 
     Returns a list of result dicts, one per (agent_count, instance_index).
     """
+    if baseline_time_limit is None:
+        baseline_time_limit = time_limit
     results = []
 
     for n_agents in agent_counts:
@@ -162,7 +169,7 @@ def run_experiment(
             # Run baseline — Joint-State A* (true paper baseline)
             if run_baseline:
                 bl_result = run_joint_astar(
-                    graph=grid, starts=starts, goals=goals, time_limit=time_limit
+                    graph=grid, starts=starts, goals=goals, time_limit=baseline_time_limit
                 )
                 if bl_result['success']:
                     baseline_successes += 1
