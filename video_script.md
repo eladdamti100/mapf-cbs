@@ -30,23 +30,20 @@
 ---
 
 ## SLIDE 3 - Why is MAPF Hard?
-**[Nimrod - 1:10-1:55]**
+**[Nimrod - 1:10-1:50]**
 
 > "The obvious approach is to search the joint state space of all agents together.
-> But the joint space explodes exponentially - it grows as O of V to the power k,
-> where V is the number of vertices and k is the number of agents.
+> But it explodes exponentially - O of V to the power k.
 >
-> With just 10 agents on a 5 by 5 grid, the state space has nearly 10 million nodes.
-> For 30 agents on a realistic map - it is completely infeasible.
+> With just 10 agents on a 5 by 5 grid, that's nearly 10 million states.
 >
-> In our experiments, Joint A-star succeeded on only 32% of 6-agent instances
-> and failed on 100% of 8-agent instances within 5 seconds.
-> We need a smarter algorithm."
+> In our experiments, Joint A-star solved only 32% of 6-agent instances
+> and 0% of 8-agent instances within 5 seconds. We need a smarter algorithm."
 
 ---
 
 ## SLIDE 4 - Conflict Types
-**[Nimrod - 1:55-2:30]**
+**[Nimrod - 1:50-2:25]**
 
 > "Before we explain CBS, let us define what a conflict is.
 >
@@ -61,7 +58,7 @@
 ---
 
 ## SLIDE 5 - CBS Overview
-**[Elad - 2:30-3:00]**
+**[Elad - 2:25-2:55]**
 
 > "Conflict-Based Search, or CBS, is a two-level algorithm.
 >
@@ -76,7 +73,7 @@
 ---
 
 ## SLIDE 6 - Time-Space A* (Low Level)
-**[Elad - 3:00-3:40]**
+**[Elad - 2:55-3:40]**
 
 > "Time-Space A-star is our low-level planner, implemented in tsa_star.py.
 > Unlike regular A-star, the state includes both the vertex AND the timestep.
@@ -93,28 +90,24 @@
 ---
 
 ## SLIDE 7 - CBS High Level (CT Branching)
-**[Elad - 3:40-4:30]**
+**[Elad - 3:40-4:20]**
 
-> "Here is how the high level works, step by step.
+> "Here is how the high level works.
 >
-> First, CBS plans each agent independently with TSA-star - this is the root of the Constraint Tree.
-> Then it scans all agent pairs for the first conflict.
-> If there is no conflict, we are done - we found an optimal solution.
+> First, CBS plans each agent independently with TSA-star - the root of the Constraint Tree.
+> Then it scans for the first conflict. If there is none, we are done - optimal solution found.
 >
-> If there is a conflict - say agents i and j both visit vertex v at time t -
-> CBS creates two child nodes.
-> In the left child, agent i is forbidden from vertex v at time t.
-> In the right child, agent j is forbidden.
-> Both children replan only the constrained agent with TSA-star.
+> If agents i and j conflict at vertex v, time t, CBS creates two child nodes:
+> one forbids agent i from that vertex at that time, the other forbids agent j.
+> Both replan only the constrained agent.
 >
-> CBS picks the cheapest child by Sum of Costs and repeats.
-> Because it searches best-first and TSA-star is optimal,
-> the first complete solution CBS finds is guaranteed to be globally optimal."
+> CBS always expands the cheapest node by Sum of Costs, so the first complete
+> solution it finds is guaranteed to be globally optimal."
 
 ---
 
 ## SLIDE 8 - Our Implementation
-**[Elad - 4:30-5:00]**
+**[Elad - 4:20-4:50]**
 
 > "We implemented CBS from scratch in Python 3.13 without using the original authors' code.
 >
@@ -133,52 +126,41 @@
 ---
 
 ## SLIDE 9 - Reproduction Results
-**[Kfir - 5:00-5:50]**
+**[Kfir - 5:00-5:40]**
 
-> "For the reproduction, we implemented the two central results from Sharon et al. 2015:
-> success rate and runtime as a function of the number of agents.
+> "For the reproduction, we targeted two central results from Sharon et al. 2015:
+> success rate and runtime as a function of agent count.
 >
-> We ran CBS and Joint-State-Space A-star on a 20 by 20 open grid with 10% random obstacles.
-> We tested 8 agent counts from 4 to 20, with 25 random instances each.
-> CBS had a 30-second time limit; Joint A-star had a 5-second limit.
+> We ran CBS and Joint-State-Space A-star on a 20 by 20 open grid, 8 agent counts
+> from 4 to 20, 25 random instances each. CBS: 30-second limit; Joint A-star: 5 seconds.
 >
-> The results match the paper's trend:
-> CBS succeeds 100% at 4 agents and remains above 90% up to 12 agents,
-> before dropping to 60% at 20 agents as problems become harder.
->
-> Joint A-star, by contrast, already fails 68% of instances at 6 agents,
-> and fails completely - 0% success - from 8 agents onward.
-> This confirms the exponential state-space explosion the paper describes."
+> The results match the paper's trend: CBS stays above 90% success up to 12 agents,
+> dropping to 60% at 20. Joint A-star already fails 68% of instances at 6 agents
+> and fails completely from 8 agents onward - confirming the exponential blowup."
 
 ---
 
 ## SLIDE 10 - Extension: Map Topology
-**[Kfir - 5:50-6:50]**
+**[Kfir - 5:40-6:35]**
 
 > "For our extension, we asked: does map topology affect CBS performance?
 >
-> We compared two map types on the same 20 by 20 grid size:
-> an open grid with 10% random obstacles,
-> and a warehouse grid - structured rows of shelves with single-cell-wide corridors,
-> designed to simulate a real warehouse environment.
+> We compared an open grid with 10% random obstacles against a warehouse grid -
+> rows of shelves with single-cell-wide corridors - same 20 by 20 size,
+> same 8 agent counts, 25 instances each, 15-second time limit.
 >
-> We ran CBS on both maps for 8 agent counts from 4 to 20, with 25 instances each
-> and a 15-second time limit.
->
-> The results are striking:
-> At 20 agents, CBS success on the open grid is 64%,
-> while on the warehouse grid it drops to only 28%.
-> The Constraint Tree expands 3,258 nodes on the warehouse map
-> versus 877 nodes on the open grid - that is 3.7 times more.
+> The results are striking: at 20 agents, CBS success is 64% on the open grid
+> but only 28% on the warehouse grid. The Constraint Tree expands 3,258 nodes
+> on the warehouse map versus 877 on the open grid - 3.7 times more.
 >
 > Why? Narrow corridors force agents onto the same cells, creating vertex conflicts.
-> Each conflict resolution forces a longer detour, which generates new conflicts
-> in adjacent corridors - a cascade effect that makes the CT much deeper."
+> Each resolution forces a detour that generates new conflicts in adjacent corridors -
+> a cascade effect that makes the CT much deeper."
 
 ---
 
 ## SLIDE 11 - Key Findings
-**[Kfir - 6:50-7:30]**
+**[Kfir - 6:35-7:15]**
 
 > "To summarize our findings:
 >
@@ -201,7 +183,7 @@
 ---
 
 ## SLIDE 12 - Conclusion
-**[Nimrod - 7:30-8:00]**
+**[Nimrod - 7:15-7:40]**
 
 > "In this project we studied, implemented, and extended the Conflict-Based Search algorithm
 > for optimal Multi-Agent Path Finding.
@@ -223,18 +205,18 @@
 |-------|---------|----------|------------|
 | 1 Title | Nimrod | 0:20 | 0:20 |
 | 2 What is MAPF | Nimrod | 0:50 | 1:10 |
-| 3 Why Hard | Nimrod | 0:45 | 1:55 |
-| 4 Conflict Types | Nimrod | 0:35 | 2:30 |
-| 5 CBS Overview | Elad | 0:30 | 3:00 |
-| 6 TSA* | Elad | 0:40 | 3:40 |
-| 7 CT Branching | Elad | 0:50 | 4:30 |
-| 8 Our Implementation | Elad | 0:30 | 5:00 |
-| 9 Reproduction Results | Kfir | 0:50 | 5:50 |
-| 10 Extension | Kfir | 1:00 | 6:50 |
-| 11 Key Findings | Kfir | 0:40 | 7:30 |
-| 12 Conclusion | Nimrod | 0:30 | 8:00 |
+| 3 Why Hard | Nimrod | 0:40 | 1:50 |
+| 4 Conflict Types | Nimrod | 0:35 | 2:25 |
+| 5 CBS Overview | Elad | 0:30 | 2:55 |
+| 6 TSA* | Elad | 0:45 | 3:40 |
+| 7 CT Branching | Elad | 0:40 | 4:20 |
+| 8 Our Implementation | Elad | 0:30 | 4:50 |
+| 9 Reproduction Results | Kfir | 0:40 | 5:30 |
+| 10 Extension | Kfir | 0:55 | 6:25 |
+| 11 Key Findings | Kfir | 0:40 | 7:05 |
+| 12 Conclusion | Nimrod | 0:25 | 7:30 |
 
-**Total: 8:00 minutes**
+**Total: 7:30 minutes — leaves ~30 seconds of buffer under the strict 8:00 limit**
 
 ---
 
