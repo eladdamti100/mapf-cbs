@@ -25,7 +25,7 @@ pip install matplotlib
 ## Project Structure
 
 ```
-mapf_cbs/
+implementation/
 ├── graph.py        # Grid representation
 ├── tsa_star.py     # Time-Space A* (low-level CBS search)
 ├── conflict.py     # Conflict detection (vertex + edge)
@@ -43,7 +43,7 @@ mapf_cbs/
 
 ## How to Run
 
-All commands are run from inside the `mapf_cbs/` directory.
+All commands are run from inside the `implementation/` directory (the folder containing this README).
 
 ### 1. Demo — solve a small 3-agent instance and visualize
 
@@ -107,7 +107,7 @@ Output files:
 Run these commands in order:
 
 ```bash
-cd mapf_cbs
+cd implementation
 python main.py --mode demo
 python main.py --mode reproduce --n-instances 25 --time-limit 30 --baseline-time-limit 5 --agent-counts 4 6 8 10 12 15 18 20
 python main.py --mode extension --n-instances 25 --time-limit 15 --agent-counts 4 6 8 10 12 15 18 20
